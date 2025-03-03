@@ -1,77 +1,70 @@
-import fitz  # PyMuPDF
-import google.generativeai as genai
+import fitz  
+import google.generativeai as genai 
 import os
-import dotenv
-from PIL import Image
-import io
+import dotenv  
+from PIL import Image  
+import io  
 
-def extract_text_from_pdf(pdf_path):
+def extract_text_from_pdf(pdf_input):
     """
-    Extracts text from a PDF file using OCR, page by page.
+    Extracts text from a PDF (file path or BytesIO) using OCR, page by page.
+    Returns the combined text as a single string.
 
     Args:
-        pdf_path: Path to the PDF file.
+        pdf_input: File path (string) OR a BytesIO object.
 
     Returns:
-        Extracted text as a single string, or None on error.
+        A single string containing all the extracted text.
     """
-    dotenv.load_dotenv()
-    GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+    dotenv.load_dotenv()  
+    GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") 
+    genai.configure(api_key=GOOGLE_API_KEY)  
 
-    if not GOOGLE_API_KEY:
-        print("ERROR: GOOGLE_API_KEY environment variable not set.")
-        return None
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
-    try:
-        genai.configure(api_key=GOOGLE_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-    except genai.APIError as e:  # Catch specific APIError
-        if "invalid API key" in str(e).lower(): # Check for the message
-            print("ERROR: Invalid Gemini API key provided.")
-        else:
-            print(f"ERROR: Gemini API error: {e}") # other api related errors
-        return None
-    except Exception as e:
-        print(f"ERROR: Failed to configure Gemini API: {e}")
-        return None
+    # Handle both file paths and BytesIO objects (for Streamlit uploads)
+    if isinstance(pdf_input, str):
+        doc = fitz.open(pdf_input)  
+    elif isinstance(pdf_input, io.BytesIO):
+        doc = fitz.open("pdf", pdf_input.read()) 
+    else:
+        raise ValueError("pdf_input must be a file path (string) or a BytesIO object.")
 
-    try:
-        doc = fitz.open(pdf_path)
-    except FileNotFoundError:
-        print(f"ERROR: PDF file not found: {pdf_path}")
-        return None
-    except fitz.FileDataError:
-        print(f"ERROR: Could not open {pdf_path}. It might be corrupted or invalid.")
-        return None
-    except Exception as e:
-        print(f"ERROR opening PDF: {e}")
-        return None
+    text_by_page = []  # Store extracted text from each page
 
-    text_by_page = []
-    for page_number, page in enumerate(doc):
-        try:
-            pixmap = page.get_pixmap()
-            img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
-            with io.BytesIO() as img_byte_arr:
-                img.save(img_byte_arr, format='PNG')
-                response = model.generate_content([
-                    {'mime_type': 'image/png', 'data': img_byte_arr.getvalue()},
-                    "Extract all the text from this image:"
-                ])
-            text_by_page.append(response.text)
+    for page_number, page in enumerate(doc):  
+        pixmap = page.get_pixmap()  # Get the page as an image 
+        img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)  # Create PIL Image from pixmap
+        img_byte_arr = io.BytesIO()  
+        img.save(img_byte_arr, format='PNG')  # Save the pil Image as PNG 
+        img_byte_arr = img_byte_arr.getvalue()  # Get the image data as bytes
 
-        except Exception as e:
-            print(f"ERROR processing page {page_number + 1}: {e}")
-            return None  # Stop on page error
+        prompt = "Extract all the text from this image:"
 
-    doc.close()
-    return "".join(text_by_page)
+        # Send image and prompt to Gemini for OCR, including mime type
+        response = model.generate_content(
+            [
+                {
+                    'mime_type': 'image/png',  # Specify MIME type for the image
+                    'data': img_byte_arr       # Image data as bytes
+                },
+                prompt,  
+            ]
+        )
+
+        print(f"--- Page {page_number + 1} ---") # Debug Print
+        print(f"Image bytes length: {len(img_byte_arr)}")
+        # with open(f"page_{page_number + 1}.png", "wb") as f: # Debugging: save images
+        #     f.write(img_byte_arr)
+
+        text_by_page.append(response.text) 
+
+    doc.close()  
+    return "".join(text_by_page) # Combine all page text and return
+
 
 if __name__ == '__main__':
-    pdf_file = "The_Gift_of_the_Magi.pdf"
-    if os.path.exists(pdf_file):
-      extracted_text = extract_text_from_pdf(pdf_file)
-      if extracted_text:
-          print(extracted_text)
-    else:
-      print(f"Error: PDF file '{pdf_file}' not found.")
+    #  for testing
+    pdf_file = "The_Gift_of_the_Magi.pdf"  
+    extracted_text = extract_text_from_pdf(pdf_file)
+    print(extracted_text)
