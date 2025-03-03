@@ -21,7 +21,6 @@ class RAGService:
         
         # Check if the collection exists; create it if it doesn't
         try:
-            # This is the updated part for ChromaDB v0.6.0
             collection_names = self.client.list_collections()
             if "my_collection" not in collection_names:
                 self.collection = self.client.create_collection("my_collection")
@@ -79,4 +78,4 @@ class RAGService:
 if __name__ == '__main__':
     rag_service = RAGService("The_Gift_of_the_Magi.pdf")
     print(rag_service.generate_answer("What did Della sell to buy Jim a gift?"))
-    print(rag_service.generate_answer("What is the capital of France?"))
+    print(rag_service.generate_answer("What is the capital of India?"))
