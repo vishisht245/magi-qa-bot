@@ -1,4 +1,3 @@
-# rag.py
 import google.generativeai as genai
 import os
 import dotenv
