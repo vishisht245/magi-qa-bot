@@ -21,6 +21,7 @@ class RAGService:
         
         # Check if the collection exists; create it if it doesn't
         try:
+            # This is the updated part for ChromaDB v0.6.0
             collection_names = self.client.list_collections()
             if "my_collection" not in collection_names:
                 self.collection = self.client.create_collection("my_collection")
@@ -64,11 +65,12 @@ class RAGService:
         try:
             relevant_chunks = self.retrieve_relevant_chunks(query)
             context = "\n".join(relevant_chunks)
-            prompt = f"""Answer the following question based on the context provided but don't mention it, keep the tone friendly and warm and answer with confidence:
+            prompt = f"""Answer the following question strictly based on the context provided **only** but don't mention it, keep the tone natural and warm and answer with confidence:
+             If the answer cannot be found in the context, respond with 'I am sorry, but I don't have enough information to answer that question from the context I was given.'
+             
              Question: {query}
              Context:
             {context}
-             If the answer cannot be found in the context, respond with 'I am sorry, but I don't have enough information to answer that question from the context I was given.'
              """
             return self.model.generate_content(prompt).text
         except Exception as e:
@@ -78,4 +80,4 @@ class RAGService:
 if __name__ == '__main__':
     rag_service = RAGService("The_Gift_of_the_Magi.pdf")
     print(rag_service.generate_answer("What did Della sell to buy Jim a gift?"))
-    print(rag_service.generate_answer("What is the capital of India?"))
+    print(rag_service.generate_answer("What is the capital of France?"))
