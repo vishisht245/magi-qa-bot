@@ -1,92 +1,60 @@
+import fitz  # PyMuPDF
 import google.generativeai as genai
 import os
 import dotenv
-from preprocessing import extract_text_from_pdf
-from sentence_transformers import SentenceTransformer
-import chromadb
-import numpy as np
+from PIL import Image
+import io
 
-class RAGService:
-    def __init__(self, pdf_path):
-        dotenv.load_dotenv()
-        GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+def extract_text_from_pdf(pdf_path):
+    """
+    Extracts text from a PDF file using OCR, page by page,
+    and returns the combined text as a single string.
 
-        if not GOOGLE_API_KEY:
-            print("ERROR: GOOGLE_API_KEY environment variable not set.")
-            return None  # Return None if API key is missing
+    Args:
+        pdf_path: The path to the PDF file.
 
-        try:
-            # Configure gemini API with the API key
-            genai.configure(api_key=GOOGLE_API_KEY)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
-        except Exception as e:
-            print(f"ERROR: Failed to configure Gemini API: {e}")
-            return None  # Exit function if API setup fails
+    Returns:
+        A single string containing all the extracted text.
+    """
+    dotenv.load_dotenv()
+    GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+    genai.configure(api_key=GOOGLE_API_KEY)
 
-        self.text = extract_text_from_pdf(pdf_path)  # Get text directly
-        self.chunks = self.chunk_text(self.text)
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.client = chromadb.Client()  # Use in-memory Chroma
-        self.collection = self.create_collection()
-        self.add_to_collection(self.chunks)
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
-    def chunk_text(self, text, chunk_size=500, overlap=50):
-        """Splits text into overlapping chunks."""
-        chunks = []
-        start = 0
-        while start < len(text):
-            end = min(start + chunk_size, len(text))
-            chunks.append(text[start:end])
-            start += chunk_size - overlap
-        return chunks
+    doc = fitz.open(pdf_path)
+    text_by_page = []
+    for page_number, page in enumerate(doc):
+        pixmap = page.get_pixmap()
+        img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples) 
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='PNG') # Convert pdf to png 
+        img_byte_arr = img_byte_arr.getvalue()
 
-    def create_collection(self):
-        """Creates a ChromaDB collection."""
-        collection = self.client.create_collection("my_collection")
-        return collection
+        prompt = "Extract all the text from this image:"
 
-    def add_to_collection(self, chunks):
-        """Encodes and adds chunks to the ChromaDB collection."""
-        embeddings = self.embedding_model.encode(chunks).tolist()
-        ids = [str(i) for i in range(len(chunks))]
-
-        self.collection.add(
-            embeddings=embeddings,
-            documents=chunks,
-            ids=ids
+        response = model.generate_content(
+            [
+                {
+                    'mime_type': 'image/png',
+                    'data': img_byte_arr
+                },
+                prompt,
+            ]
         )
 
-    def retrieve_relevant_chunks(self, query, top_k=3):
-        """Retrieves the top_k most relevant chunks from ChromaDB."""
-        query_embedding = self.embedding_model.encode([query]).tolist()
-        results = self.collection.query(
-            query_embeddings=query_embedding,
-            n_results=top_k
-        )
-        return results['documents'][0]
+        print(f"--- Page {page_number + 1} ---")
+        print(f"Image bytes length: {len(img_byte_arr)}")
+        # with open(f"page_{page_number + 1}.png", "wb") as f: # Debugging
+        #     f.write(img_byte_arr)
 
-    def generate_answer(self, query):
-        """Generates an answer using the retrieved context."""
-        relevant_chunks = self.retrieve_relevant_chunks(query)
-        context = "\n".join(relevant_chunks)
-        prompt = f"""Answer the following question based on the context provided but don't mention it, keep the tone friendly and warm and answer with confidence:
-                    Question: {query}
-                    Context:
-                    {context}
+        text_by_page.append(response.text)
 
-                    If the answer cannot be found in the context, respond with 'I am sorry, but I don't have enough information to answer that question from the context I was given.'
-                    """
-        response = self.model.generate_content(prompt)
-        return response.text
+    doc.close()
+    return "".join(text_by_page)
+
 
 if __name__ == '__main__':
     pdf_file = "The_Gift_of_the_Magi.pdf"
-    rag_service = RAGService(pdf_file)
-    
-    user_query = "What did Della sell to buy Jim a gift?"
-    answer = rag_service.generate_answer(user_query)
-    print(answer)
-
-    user_query = "What is the capital of France?"
-    answer = rag_service.generate_answer(user_query)
-    print(answer)
+    extracted_text = extract_text_from_pdf(pdf_file)
+    print(extracted_text)
