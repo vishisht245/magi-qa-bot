@@ -29,8 +29,8 @@ These can be installed using: `pip install -r requirements.txt`  (You'll need to
 1.  **Clone the repository:**
 
     ```bash
-    git clone <YOUR_REPOSITORY_URL>  # Replace with your repository URL
-    cd <YOUR_REPOSITORY_NAME>       # Replace with your repository name
+    git clone https://github.com/vishisht245/magi-qa-bot.git
+    cd magi-qa-bot.git
     ```
 
 2.  **Create a virtual environment (recommended):**
