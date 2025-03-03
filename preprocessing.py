@@ -7,54 +7,71 @@ import io
 
 def extract_text_from_pdf(pdf_path):
     """
-    Extracts text from a PDF file using OCR, page by page,
-    and returns the combined text as a single string.
+    Extracts text from a PDF file using OCR, page by page.
 
     Args:
-        pdf_path: The path to the PDF file.
+        pdf_path: Path to the PDF file.
 
     Returns:
-        A single string containing all the extracted text.
+        Extracted text as a single string, or None on error.
     """
     dotenv.load_dotenv()
     GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
-    genai.configure(api_key=GOOGLE_API_KEY)
 
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    if not GOOGLE_API_KEY:
+        print("ERROR: GOOGLE_API_KEY environment variable not set.")
+        return None
 
-    doc = fitz.open(pdf_path)
+    try:
+        genai.configure(api_key=GOOGLE_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    except genai.APIError as e:  # Catch specific APIError
+        if "invalid API key" in str(e).lower(): # Check for the message
+            print("ERROR: Invalid Gemini API key provided.")
+        else:
+            print(f"ERROR: Gemini API error: {e}") # other api related errors
+        return None
+    except Exception as e:
+        print(f"ERROR: Failed to configure Gemini API: {e}")
+        return None
+
+    try:
+        doc = fitz.open(pdf_path)
+    except FileNotFoundError:
+        print(f"ERROR: PDF file not found: {pdf_path}")
+        return None
+    except fitz.FileDataError:
+        print(f"ERROR: Could not open {pdf_path}. It might be corrupted or invalid.")
+        return None
+    except Exception as e:
+        print(f"ERROR opening PDF: {e}")
+        return None
+
     text_by_page = []
     for page_number, page in enumerate(doc):
-        pixmap = page.get_pixmap()
-        img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples) 
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='PNG') # Convert pdf to png 
-        img_byte_arr = img_byte_arr.getvalue()
+        try:
+            pixmap = page.get_pixmap()
+            img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+            with io.BytesIO() as img_byte_arr:
+                img.save(img_byte_arr, format='PNG')
+                response = model.generate_content([
+                    {'mime_type': 'image/png', 'data': img_byte_arr.getvalue()},
+                    "Extract all the text from this image:"
+                ])
+            text_by_page.append(response.text)
 
-        prompt = "Extract all the text from this image:"
-
-        response = model.generate_content(
-            [
-                {
-                    'mime_type': 'image/png',
-                    'data': img_byte_arr
-                },
-                prompt,
-            ]
-        )
-
-        print(f"--- Page {page_number + 1} ---")
-        print(f"Image bytes length: {len(img_byte_arr)}")
-        # with open(f"page_{page_number + 1}.png", "wb") as f: # Debugging
-        #     f.write(img_byte_arr)
-
-        text_by_page.append(response.text)
+        except Exception as e:
+            print(f"ERROR processing page {page_number + 1}: {e}")
+            return None  # Stop on page error
 
     doc.close()
     return "".join(text_by_page)
 
-
 if __name__ == '__main__':
     pdf_file = "The_Gift_of_the_Magi.pdf"
-    extracted_text = extract_text_from_pdf(pdf_file)
-    print(extracted_text)
+    if os.path.exists(pdf_file):
+      extracted_text = extract_text_from_pdf(pdf_file)
+      if extracted_text:
+          print(extracted_text)
+    else:
+      print(f"Error: PDF file '{pdf_file}' not found.")
