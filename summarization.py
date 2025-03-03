@@ -4,15 +4,7 @@ import dotenv
 from preprocessing import extract_text_from_pdf
 
 def generate_summary(text):
-    """
-    Generates a summary of the given text using Gemini.
-
-    Args:
-        text: The text to summarize.
-
-    Returns:
-        The generated summary.
-    """
+    """Generates a summary of the given text using Gemini."""
     dotenv.load_dotenv()
     GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
     genai.configure(api_key=GOOGLE_API_KEY)
@@ -27,6 +19,6 @@ def generate_summary(text):
 
 if __name__ == '__main__':
     pdf_file = "The_Gift_of_the_Magi.pdf"
-    text = extract_text_from_pdf(pdf_file)  # Get the text from preprocessing
+    text = extract_text_from_pdf(pdf_file)
     summary = generate_summary(text)
     print(summary)
