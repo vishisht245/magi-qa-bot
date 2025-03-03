@@ -115,12 +115,13 @@ These can be installed using: `pip install -r requirements.txt`.
         ```
     *   **RAG Prompt:**
         ```
-        Answer the following question based on the context provided but don't mention it, keep the tone friendly and warm and answer with confidence:
-        Question: {query}
-        Context:
-        {context}
-
-        If the answer cannot be found in the context, respond with 'I am sorry, but I don't have enough information to answer that question from the context I was given.'
+        Answer the following question strictly based on the context provided **only** but don't mention it, keep the tone natural and warm and answer with confidence:
+             If the answer cannot be found in the context, respond with 'I am sorry, but I don't have enough information to answer that question from the context I was given.'
+             
+             Question: {query}
+             Context:
+            {context}
+             
         ```
 
 ## Usage
