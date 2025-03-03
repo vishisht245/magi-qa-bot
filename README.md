@@ -22,7 +22,7 @@ This project implements a Retrieval-Augmented Generation (RAG) system that allow
 *   Pillow (PIL)
 *   numpy
 
-These can be installed using: `pip install -r requirements.txt`  (You'll need to create a `requirements.txt` file).
+These can be installed using: `pip install -r requirements.txt`.
 
 ## Setup
 
