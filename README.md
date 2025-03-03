@@ -137,20 +137,39 @@ These can be installed using: `pip install -r requirements.txt`  (You'll need to
 
 ## Usage
 
-1.  **Ask a Question:** Enter your question in the text box provided.
-2. **View Summary:** Click on "Show Summary" to expand and see a summary of "The Gift of the Magi".
 
-    **(Example using "The_Gift_of_the_Magi.pdf")**
 
-    **Example 1 (In-Context):**
+The application is pre-loaded with "The Gift of the Magi.pdf". You can interact with it as follows:
 
-    **Question:** What did Della sell to buy Jim a gift?
+1.  **Ask Questions:** Type your question about "The Gift of the Magi" into the text input box and press Enter (or click any submit button if present).
 
-    **Example 2 (Out-of-Context):**
+2.  **View the Summary:**  To see a concise summary of the story, click the "Show Summary" expander. This will reveal the generated summary.
 
-    **Question:** What is the capital of India?
+**Examples:**
 
-    The application will respond that it doesn't have enough information, as the answer is not within the provided context.
+Below are examples demonstrating how to use the application.  The screenshots illustrate the expected behavior.
+
+**(Initial View - Ready to Ask a Question)**
+
+![Screenshot of Interface](images/Landing_page.png)
+*   The application starts with the question input box ready.
+
+**(Example 1: Question Within the Story's Context)**
+
+*   **Question:** Who is Della?
+*   _Expected Result:_ The application will provide an answer based on the content of "The Gift of the Magi".
+
+![Screenshot of Interface](images/in_context.png)
+*   _Screenshot showing the question and the correct answer._
+
+**(Example 2: Question Outside the Story's Context)**
+
+*   **Question:** What is the capital of India?
+*   _Expected Result:_ The application will respond with a message indicating it doesn't have enough information, as the answer is not found in the story.
+
+![Screenshot of Interface](images/out_of_context.png)
+*  _Screenshot showing the question and the "I am sorry..." response._
+
 
 ## RAG Implementation
 
