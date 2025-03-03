@@ -62,19 +62,7 @@ These can be installed using: `pip install -r requirements.txt`.
 
 3.  **Install Dependencies:**
 
-    Create a `requirements.txt` file with the following content:
-
-    ```
-    PyMuPDF
-    google-generativeai
-    sentence-transformers
-    chromadb
-    streamlit
-    python-dotenv
-    Pillow
-    numpy
-    ```
-    Then, run:
+    Run:
 
     ```bash
     pip install -r requirements.txt
