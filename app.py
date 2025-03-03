@@ -1,14 +1,20 @@
 import streamlit as st
 from rag import RAGService
 from summarization import generate_summary
-# No need to import preprocessing directly here
+import os  
 
-# Initialize RAG service (cache it!)
-pdf_file = "The_Gift_of_the_Magi.pdf"
-
+# Initialize RAG service
 @st.cache_resource
 def get_rag_service():
-    return RAGService(pdf_file)
+    pdf_file = "The_Gift_of_the_Magi.pdf"
+    if not os.path.exists(pdf_file):
+        st.error(f"Error: PDF file '{pdf_file}' not found.")
+        return None
+    try:
+        return RAGService(pdf_file)
+    except Exception as e:
+        st.error(f"Error initializing RAG service: {e}")
+        return None
 
 rag_service = get_rag_service()
 
@@ -18,13 +24,16 @@ st.write("Ask questions about 'The Gift of the Magi'.")
 
 # Summary section
 with st.expander("Show Summary"):
-    st.write(generate_summary(rag_service.text)) # Directly use rag_service.text
+    if rag_service:
+        st.write(generate_summary(rag_service.text))
+    else:
+        st.write("Summary not available.")
 
-# User input
+# User input and response
 user_query = st.text_input("Enter your question:")
-
-# Generate and display answer
-if user_query:
+if user_query and rag_service:
     with st.spinner("Thinking..."):
-        answer = rag_service.generate_answer(user_query)
-    st.write(answer)
+        try:
+            st.write(rag_service.generate_answer(user_query))
+        except Exception as e:
+            st.error(f"Error generating answer: {e}")
