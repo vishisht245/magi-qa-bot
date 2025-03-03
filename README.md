@@ -196,15 +196,3 @@ To use this application with a different PDF:
 *   **Missing Dependencies:** Ensure all required packages are installed using `pip install -r requirements.txt`.
 * **ChromaDB errors**: Make sure that you are using python 3.9 or above.
 * **Other Errors**: Examine the error messages in your terminal for clues.  The code includes some basic error handling, but more complex issues might require debugging.
-
-## Contributing
-
-Contributions are welcome! If you'd like to contribute:
-
-1.  Fork the repository.
-2.  Create a new branch for your feature/bugfix.
-3.  Make your changes.
-4.  Submit a pull request.
-
-## License
-Add a license here.
