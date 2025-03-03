@@ -1,4 +1,3 @@
-# preprocessing.py
 import fitz  # PyMuPDF
 import google.generativeai as genai
 import os
