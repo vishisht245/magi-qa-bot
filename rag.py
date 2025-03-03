@@ -10,9 +10,20 @@ class RAGService:
     def __init__(self, pdf_path):
         dotenv.load_dotenv()
         GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
-        genai.configure(api_key=GOOGLE_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
-        self.text = extract_text_from_pdf(pdf_path) # Get text directly
+
+        if not GOOGLE_API_KEY:
+            print("ERROR: GOOGLE_API_KEY environment variable not set.")
+            return None  # Return None if API key is missing
+
+        try:
+            # Configure gemini API with the API key
+            genai.configure(api_key=GOOGLE_API_KEY)
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
+        except Exception as e:
+            print(f"ERROR: Failed to configure Gemini API: {e}")
+            return None  # Exit function if API setup fails
+
+        self.text = extract_text_from_pdf(pdf_path)  # Get text directly
         self.chunks = self.chunk_text(self.text)
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         self.client = chromadb.Client()  # Use in-memory Chroma
@@ -20,6 +31,7 @@ class RAGService:
         self.add_to_collection(self.chunks)
 
     def chunk_text(self, text, chunk_size=500, overlap=50):
+        """Splits text into overlapping chunks."""
         chunks = []
         start = 0
         while start < len(text):
@@ -29,10 +41,12 @@ class RAGService:
         return chunks
 
     def create_collection(self):
-      collection = self.client.create_collection("my_collection")
-      return collection
+        """Creates a ChromaDB collection."""
+        collection = self.client.create_collection("my_collection")
+        return collection
 
     def add_to_collection(self, chunks):
+        """Encodes and adds chunks to the ChromaDB collection."""
         embeddings = self.embedding_model.encode(chunks).tolist()
         ids = [str(i) for i in range(len(chunks))]
 
@@ -43,6 +57,7 @@ class RAGService:
         )
 
     def retrieve_relevant_chunks(self, query, top_k=3):
+        """Retrieves the top_k most relevant chunks from ChromaDB."""
         query_embedding = self.embedding_model.encode([query]).tolist()
         results = self.collection.query(
             query_embeddings=query_embedding,
@@ -51,6 +66,7 @@ class RAGService:
         return results['documents'][0]
 
     def generate_answer(self, query):
+        """Generates an answer using the retrieved context."""
         relevant_chunks = self.retrieve_relevant_chunks(query)
         context = "\n".join(relevant_chunks)
         prompt = f"""Answer the following question based on the context provided but don't mention it, keep the tone friendly and warm and answer with confidence:
@@ -66,6 +82,7 @@ class RAGService:
 if __name__ == '__main__':
     pdf_file = "The_Gift_of_the_Magi.pdf"
     rag_service = RAGService(pdf_file)
+    
     user_query = "What did Della sell to buy Jim a gift?"
     answer = rag_service.generate_answer(user_query)
     print(answer)
