@@ -1,4 +1,3 @@
-#app.py
 import streamlit as st
 from rag import RAGService
 from summarization import generate_summary
@@ -17,30 +16,50 @@ def get_rag_service():
         st.error(f"Error initializing RAGService: {e}")
         return None
 
-rag_service = get_rag_service()
+# Set page configuration
+st.set_page_config(
+    page_title="The Gift of the Magi Q&A",
+    page_icon="📚",
+    layout="centered"
+)
 
-# --- Check for API Key Error BEFORE UI ---
-if rag_service is None or rag_service.model is None:  # Check for model as well
+# Initialize RAG service
+rag_service = get_rag_service()
+if rag_service is None:
+    st.error("ERROR: Unable to initialize the RAG service")
+    st.stop()
+if rag_service.model is None:
     st.error("ERROR: The Google Gemini API key is not set or is invalid")
     st.stop()
 
-# App UI
+# Page header
 st.title("The Gift of the Magi Q&A")
 st.write("Ask questions about 'The Gift of the Magi'.")
 
 # Summary section
 with st.expander("Show Summary"):
     if rag_service and rag_service.text is not None:
-        st.write(generate_summary(rag_service.text))
+        with st.spinner("Generating summary..."):
+            summary_text = generate_summary(rag_service.text)
+        st.markdown(f"{summary_text}")
     else:
         st.write("Summary not available.")
 
+# Question form
+with st.form("query_form"):
+    user_query = st.text_input("Enter your question:")
+    submitted = st.form_submit_button("Submit")
+    
+    if submitted:
+        user_query = user_query.strip()
+        if not user_query:
+            st.error("Please enter a question.")
+        else:
+            with st.spinner("Thinking..."):
+                try:
+                    answer = rag_service.generate_answer(user_query)
+                    st.markdown(f"{answer}")
+                except Exception as e:
+                    st.error(f"Error generating answer: {e}")
 
-# User input and response
-user_query = st.text_input("Enter your question:")
 
-if user_query: # Check if user enter the query
-    with st.spinner("Thinking..."):
-        # Removed the try...except block
-        answer = rag_service.generate_answer(user_query)  # Call directly
-        st.write(answer) # Display the result
