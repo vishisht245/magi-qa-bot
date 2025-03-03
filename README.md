@@ -159,7 +159,7 @@ Below are examples demonstrating how to use the application.  The screenshots il
 *   **Question:** Who is Della?
 *   _Expected Result:_ The application will provide an answer based on the content of "The Gift of the Magi".
 
-![Screenshot of Interface](images/in_context.png)
+![Screenshot of Interface](images/In_context.png)
 *   _Screenshot showing the question and the correct answer._
 
 **(Example 2: Question Outside the Story's Context)**
@@ -167,7 +167,7 @@ Below are examples demonstrating how to use the application.  The screenshots il
 *   **Question:** What is the capital of India?
 *   _Expected Result:_ The application will respond with a message indicating it doesn't have enough information, as the answer is not found in the story.
 
-![Screenshot of Interface](images/out_of_context.png)
+![Screenshot of Interface](images/Out_of_context.png)
 *  _Screenshot showing the question and the "I am sorry..." response._
 
 
