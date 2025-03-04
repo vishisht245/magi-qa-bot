@@ -27,9 +27,9 @@ def extract_text_from_pdf(pdf_input):
 
     for page_number, page in enumerate(doc):
         pixmap = page.get_pixmap()
-        img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='PNG')
+        img = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples) # Convert pdf to image
+        img_byte_arr = io.BytesIO() # Saving in-memory
+        img.save(img_byte_arr, format='PNG') # Saving in png format
         img_byte_arr = img_byte_arr.getvalue()
 
         prompt = "Extract all the text from this image:"
@@ -44,10 +44,10 @@ def extract_text_from_pdf(pdf_input):
             ]
         )
 
-        # Debug prints (optional - you can remove these in production)
+        # Debug prints 
         print(f"--- Page {page_number + 1} ---")
         print(f"Image bytes length: {len(img_byte_arr)}")
-        # Debugging: save images (optional - you can remove these)
+        # Debugging: save images
         # with open(f"page_{page_number + 1}.png", "wb") as f:
         #     f.write(img_byte_arr)
 
