@@ -16,7 +16,7 @@ class RAGService:
         self.chunks = self.chunk_text(self.text)
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         
-        # Use PersistentClient instead of Client for database persistence
+        # PersistentClient for database persistence
         self.client = chromadb.PersistentClient("./chroma_db")
         
         # Check if the collection exists; create it if it doesn't
