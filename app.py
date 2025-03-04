@@ -19,7 +19,6 @@ def get_rag_service():
 # Set page configuration
 st.set_page_config(
     page_title="The Gift of the Magi Q&A",
-    page_icon="📚",
     layout="centered"
 )
 
