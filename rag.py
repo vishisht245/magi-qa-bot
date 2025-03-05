@@ -79,4 +79,4 @@ class RAGService:
 if __name__ == '__main__':
     rag_service = RAGService("The_Gift_of_the_Magi.pdf")
     print(rag_service.generate_answer("What did Della sell to buy Jim a gift?"))
-    print(rag_service.generate_answer("What is the capital of France?"))
+    print(rag_service.generate_answer("What is the capital of India?"))
