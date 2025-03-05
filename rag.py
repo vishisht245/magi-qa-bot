@@ -6,7 +6,6 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 
 class RAGService:
-    # Update this part in your rag.py file
     def __init__(self, pdf_path):
         """Initializes the RAG service."""
         dotenv.load_dotenv()
